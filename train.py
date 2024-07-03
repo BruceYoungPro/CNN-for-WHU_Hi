@@ -19,7 +19,7 @@ from data import DATA_SETS
 
 # 定义超参
 EPOCH = 5
-BATCH_SIZE = 32
+BATCH_SIZE = 43
 classes_name = [str(c) for c in range(9)]  # 分类地物数量
 
 # --------------------加载数据---------------------

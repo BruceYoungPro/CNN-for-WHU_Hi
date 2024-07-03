@@ -24,47 +24,57 @@ class SeparableConv2d(nn.Module):  # Depth wise separable conv
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        # in_channels,out_channels,kernel_size,stride(default:1),padding(default:0)
-        self.conv1 = torch.nn.Sequential(
-            SeparableConv2d(270, 16, 1, 1, 0),  # 1*1卷积核
+        self.conv1 = nn.Sequential(
+            SeparableConv2d(270, 32, 3, 1, 1),  # 3*3卷积核
             nn.ReLU(inplace=True),
-            nn.GroupNorm(16, 16)
+            nn.BatchNorm2d(32)
         )
         self.conv2 = nn.Sequential(
-            nn.Conv2d(270, 512, 1, 1, 0),
-            nn.GroupNorm(512, 512),
+            SeparableConv2d(32, 64, 3, 1, 1),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.4),
-            SeparableConv2d(512, 256, 3, 1, 1),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.4),
-            SeparableConv2d(256, 128, 3, 1, 1),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.4),
-            SeparableConv2d(128, 64, 3, 1, 1),
-            nn.ReLU(inplace=True),
-            nn.GroupNorm(64, 64)
+            nn.BatchNorm2d(64),
+            nn.Dropout(0.3)
         )
-
+        self.conv3 = nn.Sequential(
+            SeparableConv2d(64, 128, 3, 1, 1),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(128),
+            nn.Dropout(0.3)
+        )
+        self.conv4 = nn.Sequential(
+            SeparableConv2d(128, 256, 3, 1, 1),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(256),
+            nn.Dropout(0.3)
+        )
+        self.conv5 = nn.Sequential(
+            SeparableConv2d(256, 512, 3, 1, 1),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(512),
+            nn.Dropout(0.3)
+        )
+        
         self.classifier = nn.Sequential(
-            nn.Linear(80*9*9, 2048), # 80 = conv1(16) + conv2(64) * patch_size * patch_size
+            nn.Linear(512 * 9 * 9, 2048),
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
-            nn.Linear(2048, 256),
+            nn.Linear(2048, 512),
             nn.ReLU(inplace=True),
             nn.Dropout(0.2),
-            nn.Linear(256, 16),
+            nn.Linear(512, 16),
             nn.LogSoftmax(dim=1)
         )
 
     def forward(self, x):
-        x0 = xZero(x)
-        x1 = self.conv1(x0)
-        x2 = self.conv2(x)
-        x12 = torch.cat((x1, x2), 1)
-        xCat = x12.view(-1, self.numFeatures(x12))  # 特征映射一维展开
-        output = self.classifier(xCat)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
+        x = self.conv5(x)
+        x = x.view(x.size(0), -1)  # 展平
+        output = self.classifier(x)
         return output
+
 
     def numFeatures(self, x):
         size = x.size()[1:]  # 获取卷积图像的h,w,depth

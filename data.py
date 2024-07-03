@@ -14,7 +14,7 @@ from utils import pca, pad, standartize, patch, check_path
 # 定义全局变量
 PATCH_SIZE = 9  # 切片尺寸
 OUTPUT_CLASSES = 9  # 输出9类地物
-TRAIN_SIZE = 2000  # 用来训练的每类的数量
+TEST_FRAC = 0.50 # 用来测试数据的百分比
 NEW_DATA_PATH = os.path.join(os.getcwd(), "patch")  # 存放数据路径 patch是文件夹名称
 DATA_SETS = dict(LongKou="WHU_Hi_LongKou", HongHu="WHU_Hi_HongHu", HanChuan="WHU_Hi_HanChuan")
 CLASS = dict(LongKou=9, HongHu=22, HanChuan=16)
@@ -46,10 +46,11 @@ def createdData(data, label, data_set):
         # 打乱切片
         shuffle(PATCH)
         # 划分测试集与训练集
-        TRAIN_PATCH.extend(PATCH[:TRAIN_SIZE])  # 0 ~ split_size
-        TEST_PATCH.extend(PATCH[TRAIN_SIZE: 2*TRAIN_SIZE])  # split_size ~ len(class)
-        TRAIN_LABEL.extend(LABEL[:TRAIN_SIZE])
-        TEST_LABEL.extend(LABEL[TRAIN_SIZE: 2*TRAIN_SIZE])
+        split_size = int(len(PATCH)*TEST_FRAC)
+        TEST_PATCH.extend(PATCH[:split_size])  # 0 ~ split_size
+        TRAIN_PATCH.extend(PATCH[split_size:])  # split_size ~ len(class)
+        TEST_LABEL.extend(LABEL[:split_size])
+        TRAIN_LABEL.extend(LABEL[split_size:])
         # 写入文件夹
         train_dict, test_dict = {}, {}
         train_dict["train_patches"] = TRAIN_PATCH

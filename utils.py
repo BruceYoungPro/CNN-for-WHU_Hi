@@ -8,6 +8,7 @@ Created on Tue May 14 12:16:11 2019
 from __future__ import print_function, division
 import torch
 import os
+import torch.nn.functional as F
 import scipy.io
 import numpy as np
 import matplotlib.pyplot as plt

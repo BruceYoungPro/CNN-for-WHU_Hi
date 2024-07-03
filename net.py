@@ -26,16 +26,16 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # in_channels,out_channels,kernel_size,stride(default:1),padding(default:0)
         self.conv1 = torch.nn.Sequential(
-            SeparableConv2d(103, 16, 1, 1, 0),  # 1*1卷积核
+            SeparableConv2d(270, 16, 1, 1, 0),  # 1*1卷积核
             nn.ReLU(inplace=True),
             nn.GroupNorm(16, 16)
         )
         self.conv2 = nn.Sequential(
-            nn.Conv2d(103, 256, 1, 1, 0),
-            nn.GroupNorm(256, 256),
+            nn.Conv2d(270, 512, 1, 1, 0),
+            nn.GroupNorm(512, 512),
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
-            SeparableConv2d(256, 256, 3, 1, 1),
+            SeparableConv2d(512, 256, 3, 1, 1),
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
             SeparableConv2d(256, 128, 3, 1, 1),
@@ -47,7 +47,7 @@ class Net(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(80*17*17, 2048),
+            nn.Linear(80*9*9, 2048), # 80 = conv1(16) + conv2(64) * patch_size * patch_size
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
             nn.Linear(2048, 256),

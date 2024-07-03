@@ -13,19 +13,20 @@ import torch.nn.functional as F
 import torch.optim as optim
 from datetime import datetime
 from tensorboardX import SummaryWriter
-from utils import DataSet, validate, show_confMat  # 自定义类
+from utils import WHU_Hi_Dataset, validate, show_confMat  # 自定义类
 from net import Net  # 导入模型
+from data import DATA_SETS
 
 # 定义超参
 EPOCH = 5
-BATCH_SIZE = 24
+BATCH_SIZE = 32
 classes_name = [str(c) for c in range(9)]  # 分类地物数量
 
 # --------------------加载数据---------------------
 # Indian Pines .mat文件路径(每个文件都是一个单独的类)
-path = os.path.join(os.getcwd(), "patch")
-training_dataset = DataSet(path=path, train=True)
-testing_dataset = DataSet(path=path, train=False)
+path = os.path.join(os.getcwd(), f"{DATA_SETS['LongKou']}_patch")
+training_dataset = WHU_Hi_Dataset(path=path, train=True)
+testing_dataset = WHU_Hi_Dataset(path=path, train=False)
 # Data Loaders
 train_loader = torch.utils.data.DataLoader(
     dataset=training_dataset,
@@ -69,7 +70,6 @@ for epoch in range(EPOCH):
     loss_sigma = 0.0    # 记录一个epoch的loss之和
     correct = 0.0
     total = 0.0
-    scheduler.step()  # 更新学习率
 
     for batch_idx, data in enumerate(train_loader):
         # 获取图片和标签
@@ -82,6 +82,7 @@ for epoch in range(EPOCH):
         loss = criterion(outputs, labels)
         loss.backward()  # 反向传播
         optimizer.step()  # 更新权值
+        scheduler.step()  # 更新学习率
 
         # 统计预测信息
         _, predicted = torch.max(outputs.data, 1)
@@ -105,10 +106,10 @@ for epoch in range(EPOCH):
             writer.add_scalars('Accuracy_group', {
                                'train_acc': correct / total}, epoch)
     # 每个epoch，记录梯度，权值
-    for name, layer in cnn.named_parameters():
-        writer.add_histogram(
-            name + '_grad', layer.grad.cpu().data.numpy(), epoch)
-        writer.add_histogram(name + '_data', layer.cpu().data.numpy(), epoch)
+    # for name, layer in cnn.named_parameters():
+    #     writer.add_histogram(
+    #         name + '_grad', layer.grad.cpu().data.numpy(), epoch)
+    #     writer.add_histogram(name + '_data', layer.cpu().data.numpy(), epoch)
 
     # ------------------------------------ 观察模型在验证集上的表现 ------------------------------------
     if epoch % 1 == 0:

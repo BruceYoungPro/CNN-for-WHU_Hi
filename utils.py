@@ -17,54 +17,39 @@ from sklearn import preprocessing
 
 
 # 加载输入
-class DataSet(Dataset):
+class WHU_Hi_Dataset(Dataset):
     def __init__(self, path, train, transform=None):
-        if(train):
-            select = "Training"
+        if (train):
+            select = "Train"
             patch_type = "train"
         else:
-            select = "Testing"
-            patch_type = "testing"
+            select = "Test"
+            patch_type = "test"
         self.tensors = []
-
         self.labels = []
         self.transform = transform
-        # 迭代每类tensor 并添加patch和labels
-        # 对应list
         for file in os.listdir(path):
-            if(os.path.isfile(os.path.join(path, file)) and select in file):
-                temp = scipy.io.loadmat(os.path.join(
-                    path, file))  # 加载 mat dictionary
-                # 过滤 dictionary 有下划线 "_" 的保留
-                temp = {k: v for k, v in temp.items() if k[0] != '_'}
-
-                for i in range(len(temp[patch_type+"_patches"])):
-                    self.tensors.append(temp[patch_type+"_patches"][i])
-                    self.labels.append(temp[patch_type+"_labels"][0][i])
-        self.tensors = np.array(self.tensors)
-        self.labels = np.array(self.labels)
-        # print(np.shape(temp[patch_type+"_patches"]))
+            if (os.path.isfile(os.path.join(path, file)) and select in file):
+                temp = np.load(os.path.join(path, file), allow_pickle=True).item()
+                for i in range(len(temp[patch_type + "_patches"])):
+                    self.tensors.append(temp[patch_type + "_patches"][i])
+                    self.labels.append(temp[patch_type + "_labels"][i])
 
     def __len__(self):
         try:
             if len(self.tensors) != len(self.labels):
                 raise Exception(
-                    "Lengths of the tensor and labels list are not the same")
+                    "Lengths of the tensors and labels list are not the same")
         except Exception as e:
             print(e.args[0])
         return len(self.tensors)
 
-
-# 返回一个patch 和label
-
-
     def __getitem__(self, idx):
         sample = (self.tensors[idx], self.labels[idx])
-       # print(self.labels)
+        # print(self.labels)
         sample = (torch.from_numpy(self.tensors[idx]), torch.from_numpy(
             np.array(self.labels[idx])).long())
         return sample
-    # 包含patch image和相应label的元组
 
 
 # 标准化
@@ -193,3 +178,8 @@ def show_confMat(confusion_mat, classes, set_name, out_dir):
     # 保存
     plt.savefig(os.path.join(out_dir, 'Confusion_Matrix' + set_name + '.png'))
     plt.close()
+
+def check_path(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+        return False
